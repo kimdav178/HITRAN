@@ -48,7 +48,7 @@ for i in range(len(nuij)):
         fg[j] += math.sqrt(0.693 / math.pi / (AlphaD ** 2)) * math.exp(
             -((nu[j] - nuij[i]) ** 2) * 0.693 / (AlphaD ** 2)) * S
     #k += S[i - 36] * np.convolve(fg, fl, mode='same') * 0.001
-    #k += S[i - 36] * scipy.special.voigt_profile(nu - nuij[i], sigma, Gamma)
+    #k += S[i - 36] * scipy.special.voigt_profile(nu - nuij_H2O[i], sigma, Gamma)
 
 tg = np.exp(-fg * l * los * Tr * p / T)
 tl = np.exp(-fl * l * los * Tr * p / T)

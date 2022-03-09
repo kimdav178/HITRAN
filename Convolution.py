@@ -30,7 +30,7 @@ l = 5
 Tr = 273
 
 nuij = [6056 + i * 0.001 for i in range(2001)]  # Сетка частот
-#AlphaD = [nuij[j] / c * math.sqrt(2 * Na * kb * T * 0.693 / M) for j in range(2001)]
+#AlphaD = [nuij_H2O[j] / c * math.sqrt(2 * Na * kb * T * 0.693 / M) for j in range(2001)]
 fl = np.zeros((2001))
 fg = np.zeros((2001))
 S = np.zeros((2001))

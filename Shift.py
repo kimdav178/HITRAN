@@ -60,7 +60,7 @@ for i in range(len(nuij)):
             K += fg[o] * fl[1000 + j - o]
         k[j] += K * S[i] * 0.001
     #k += S[i - 36] * np.convolve(fg, fl, mode='same') * 0.001
-    #k += S[i - 36] * scipy.special.voigt_profile(nu - nuij[i], sigma, Gamma)
+    #k += S[i - 36] * scipy.special.voigt_profile(nu - nuij_H2O[i], sigma, Gamma)
 
 los,_ = curve_fit(lambda x, a: np.exp(- a * x * l), k, Trans, p0=3e17, bounds=[3e16, 1e25])
 print(los)

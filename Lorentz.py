@@ -75,6 +75,6 @@ for j in range(20):
         los = x
     x += 1e14
 print(los)
-plt.plot(nuij[4000:6001], (best - Trans) / best)
+plt.plot(nuij_H2O[4000:6001], (best - Trans) / best)
 plt.show()
 """
