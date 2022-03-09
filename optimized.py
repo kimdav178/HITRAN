@@ -50,7 +50,7 @@ for i in range(len(nuij)):
         fl[j] = Gamma / math.pi / (Gamma ** 2 + (nu[j] - (nuij[i])) ** 2)
         fg[j] = math.sqrt(0.693 / math.pi / (AlphaD ** 2)) * math.exp(
             -((nu[j] - nuij[i]) ** 2) * 0.693 / (AlphaD ** 2))
-    #kspecial += S * scipy.special.voigt_profile(nu - nuij[i], sigma, Gamma)
+    #kspecial += S * scipy.special.voigt_profile(nu - nuij_H2O[i], sigma, Gamma)
     n1 = np.argmax(fg)
     if n1 > round((z - 1) / 2) and 2 * n1 < z + round((z - 1 - x) / 2):
         fl2 = fl[round((z - 1 - x) / 2):2 * n1 - round((z - 1 - x) / 2) + 1]

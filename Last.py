@@ -38,7 +38,7 @@ for i in range(len(nuij)):
     Gamma = ((Tref / T) ** nair[i]) * Slf[i] * ps
     S = Sref[i] * Qref / Q * math.exp(-c2 * E[i] / T) / math.exp(-c2 * E[i] / Tref) * (
             1 - math.exp(-c2 * nuij[i] / T)) / (1 - math.exp(-c2 * nuij[i] / Tref))
-    #khapi += S * hapi.PROFILE_VOIGT(nuij[i], AlphaD, Gamma, p * Delta[i], nu1)
+    #khapi += S * hapi.PROFILE_VOIGT(nuij_H2O[i], AlphaD, Gamma, p * Delta[i], nu)
     khapi += S * hapi.PROFILE_VOIGT(nuij[i], AlphaD, Gamma, 0, nu1)
 
 los,_ = curve_fit(lambda q, a: np.exp(- a * q * l), khapi, Trans, p0=2.4e19, bounds=[2.3e19, 2.5e19])
