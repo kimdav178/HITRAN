@@ -60,18 +60,18 @@ print(np.mean(t))
 
 t = np.zeros((200001))
 best = []
-x = 1.21e17
+fabri = 1.21e17
 min = 1e20
 for j in range(200):
     y = 0
     for i in range(200001):
-        t[i] = math.exp(- k[i] * l * x)
+        t[i] = math.exp(- k[i] * l * fabri)
         y += (t[i] - T5mb[i]) ** 2
     if y < min:
         min = y
         best = copy.deepcopy(t)
-        los = x
-    x += 1e13
+        los = fabri
+    fabri += 1e13
 print(los)
 plt.plot(nu, (best - T5mb) / best)
 plt.show()

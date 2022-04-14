@@ -12,7 +12,7 @@ def lin_comb(x, y1, y2, y3, y4, y5, y6, y7, y8):
 
 #hapi.getHelp(hapi.ISO_ID)
 hapi.db_begin('Data')
-#hapi.fetch_by_ids('Mixture', [1, 2, 3, 4, 7, 8, 9, 10], 3593.7, 3594.7)
+#hapi.fetch_by_ids('Mixture', [1, 2, 3, 4, 7, 8, 9, 10], 3583.7, 3604.7)
 #hapi.select('Mixture')
 
 molec, iso, nuij, Sref, E, Slf, Air, nair, Delta = hapi.getColumns('Mixture', ['molec_id',
@@ -57,15 +57,14 @@ for i in range(len(nuij)):
     S = Sref[i] * Qref[molec[i] - 1, iso[i] - 1] / Q[molec[i] - 1, iso[i] - 1] * \
         math.exp(-c2 * E[i] / T) / math.exp(-c2 * E[i] / Tref) * (1 - math.exp(-c2 * nuij[i] / T)) \
         / (1 - math.exp(-c2 * nuij[i] / Tref))
-    #khapi[molec[i] - 1, iso[i] - 1, :] += S * hapi.PROFILE_VOIGT(nuij[i], AlphaD, Gamma, p * Delta[i], nu)
-    khapi[molec[i] - 1, iso[i] - 1, :] += S * hapi.PROFILE_VOIGT(nuij[i], AlphaD, Gamma, 0, nu)
+    khapi[molec[i] - 1, iso[i] - 1, :] += S * hapi.PROFILE_VOIGT(nuij[i], AlphaD, Gamma, p * Delta[i], nu)
+    #khapi[molec[i] - 1, iso[i] - 1, :] += S * hapi.PROFILE_VOIGT(nuij[i], AlphaD, Gamma, 0, nu)
 
 x = [khapi[0, 0, :], khapi[0, 1, :], khapi[0, 2, :], khapi[0, 3, :], khapi[1, 0, :], khapi[1, 1, :], khapi[1, 2, :], khapi[1, 3, :]]
 Trans_linear = - np.log(Trans) / l
 los, cov = curve_fit(lin_comb, x, Trans_linear, p0=1e13 * np.ones(8), bounds=[1e10, 1e22])
 print(los)
 
-#los = np.array([2.6867811e19, 2.6867811e19, 2.6867811e19, 2.6867811e19, 2.6867811e19, 2.6867811e19, 2.6867811e19, 2.6867811e19])
 for i in range(4):
     thapi += los[i] * khapi[0, i, :] + los[i + 4] * khapi[1, i, :]
 thapi = np.exp(- l * thapi)

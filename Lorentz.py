@@ -61,19 +61,19 @@ print(np.mean(t))
 
 t = np.zeros((2001))
 best = []
-x = 2.4461e19
+fabri = 2.4461e19
 min = 1e20
 
 for j in range(20):
     y = 0
     for i in range(2001):
-        t[i] = math.exp(- k[4000 + i] * l * x)
+        t[i] = math.exp(- k[4000 + i] * l * fabri)
         y += (t[i] - Trans[9000 + i]) ** 2
     if y < min:
         min = y
         best = copy.deepcopy(t)
-        los = x
-    x += 1e14
+        los = fabri
+    fabri += 1e14
 print(los)
 plt.plot(nuij_H2O[4000:6001], (best - Trans) / best)
 plt.show()
