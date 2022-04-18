@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button, RadioButtons
+from matplotlib.widgets import Slider
 
 def baseline(a, b):
     return a * t + b
@@ -46,21 +46,5 @@ def sliders_on_changed(val):
     fig.canvas.draw_idle()
 a_slider.on_changed(sliders_on_changed)
 b_slider.on_changed(sliders_on_changed)
-
-# Add a button for resetting the parameters
-reset_button_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
-reset_button = Button(reset_button_ax, 'Reset', hovercolor='0.975')
-def reset_button_on_clicked(mouse_event):
-    b_slider.reset()
-    a_slider.reset()
-reset_button.on_clicked(reset_button_on_clicked)
-
-# Add a set of radio buttons for changing color
-color_radios_ax = fig.add_axes([0.025, 0.5, 0.15, 0.15])
-color_radios = RadioButtons(color_radios_ax, ('red', 'blue', 'green'), active=0)
-def color_radios_on_clicked(label):
-    line.set_color(label)
-    fig.canvas.draw_idle()
-color_radios.on_clicked(color_radios_on_clicked)
 
 plt.show()
