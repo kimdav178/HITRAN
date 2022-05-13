@@ -15,51 +15,56 @@ def lin_comb(x, y1, y2, y3, y4, y5, y6, y7, y8):
 def baseline(a, b, c):
     return a * nu_period + b + c * (nu_period ** 2)
 
+
+def normalized(a, b, c):
+    return exper_period / (a * nu_period + b + c * (nu_period ** 2))
+
+
 def nu_adjust(nu_0):
-    return np.arange(nu_0, nu_0 + len(exper_period) * 0.001, 0.001)
+    return np.arange(nu_0, nu_0 - 0.0005 + len(exper_period) * 0.001, 0.001)
 
 
 nu_step = 0.05
-beginning = 8  # Номер первого пика
+beginning = 23  # Номер первого пика
 end = 960
 a = beginning
 pointmax = [beginning]
 valuemax = [0]
 fabri = [float(i) for i in open("3562-3564/fp1").read().split()]
-exper1 = [float(i) for i in open("3562-3564/1").read().split()]
+exper = [float(i) for i in open("3562-3564/1").read().split()]
 hitran = pd.read_excel("3562-3564/3562.xlsx")
 Trans = np.array(hitran.Trans)
 nu_model = np.array(hitran.nu)
 
 max_fabri = max(fabri)  #Обычно этих строк не должно быть
-max_exp = max(exper1)
+max_exp = max(exper)
 for i in range(len(fabri)):
     fabri[i] = max_fabri - fabri[i]
-    exper1[i] = max_exp - exper1[i]
+    exper[i] = max_exp - exper[i]
 
 
 plt.plot(np.arange(len(fabri)), fabri)
 plt.show()
-plt.plot(np.arange(len(exper1)), exper1)
+plt.plot(np.arange(len(exper)), exper)
 plt.show()
 
 for i in range(beginning, end):
     if ((fabri[i] >= max(fabri[i - 2], fabri[i - 1], fabri[i + 1], fabri[i + 2])) or
-        (fabri[i] <= min(fabri[i - 2], fabri[i - 1], fabri[i + 1], fabri[i + 2]))) and i > a + 2:
+        (fabri[i] <= min(fabri[i - 3], fabri[i - 2], fabri[i - 1], fabri[i + 1], fabri[i + 2]))) and i > a + 2:
         l = i - a
         pointmax.append(i)
         valuemax.append(valuemax[len(valuemax) - 1] + nu_step / 2)
         a = i
 
 #for i in range(beginning, a):      Обычно эти строки должны быть
-#    exper1[i] -= exper1[end + 20]
-exper1_cut = exper1[beginning:a]
+#    exper[i] -= exper[end + 20]
+exper1_cut = exper[beginning:a]
 interp_grid = np.arange(beginning, pointmax[len(pointmax) - 1])
 interp_nu = interp1d(pointmax, valuemax, kind='quadratic')
 nu_interp = interp_nu(interp_grid)
 
-#plt.plot(np.arange(len(nu_interp)), nu_interp)
-#plt.show()
+plt.plot(np.arange(len(nu_interp)), nu_interp)
+plt.show()
 
 # Разворот и интерполяция спектра на периодическую сетку частот
 nu_reversed = [nu_interp[len(nu_interp) - i - 1] for i in range(len(nu_interp))]
@@ -72,22 +77,30 @@ exper_period = interp_exper(nu_period)
 # Подбор базовой линии
 def sliders_on_changed(val):
     line.set_ydata(baseline(a_slider.val, b_slider.val, c_slider.val))
+    exp.set_xdata(nu_adjust(nu_slider.val))
+    exp.set_ydata(normalized(a_slider.val, b_slider.val, c_slider.val))
     fig.canvas.draw_idle()
 
 
 fig = plt.figure()
-ax = fig.add_subplot(111)
+ax = fig.add_subplot(121)
+bx = fig.add_subplot(122)
 fig.subplots_adjust(bottom=0.25)
 a_0 = 10000
 b_0 = 5000
 c_0 = 0
+nu_0 = 3562
 [line, approximation] = ax.plot(nu_period, baseline(a_0, b_0, c_0), nu_period, exper_period, linewidth=2)
+[exp, model] = bx.plot(nu_adjust(nu_0), normalized(a_0, b_0, c_0), nu_model, Trans)
 a_slider_ax = fig.add_axes([0.25, 0.15, 0.65, 0.03])
 a_slider = Slider(a_slider_ax, 'a', 5000, 20000, valinit=a_0)
 b_slider_ax = fig.add_axes([0.25, 0.1, 0.65, 0.03])
 b_slider = Slider(b_slider_ax, 'b', 0, 10000, valinit=b_0)
 c_slider_ax = fig.add_axes([0.25, 0.05, 0.65, 0.03])
 c_slider = Slider(c_slider_ax, 'c', -5000, 5000, valinit=c_0)
+nu_slider_ax = fig.add_axes([0.25, 0, 0.65, 0.03])
+nu_slider = Slider(nu_slider_ax, 'nu', nu_0 - 1, nu_0 + 1, valinit=nu_0)
+nu_slider.on_changed(sliders_on_changed)
 a_slider.on_changed(sliders_on_changed)
 b_slider.on_changed(sliders_on_changed)
 c_slider.on_changed(sliders_on_changed)
@@ -95,30 +108,12 @@ plt.show()
 print(a_slider.val, b_slider.val, c_slider.val)
 for i in range(len(exper_period)):
     exper_period[i] = exper_period[i] / (a_slider.val * nu_period[i] + b_slider.val + c_slider.val * (nu_period[i] ** 2))
-
-#for i in range(len(exper_period)):
-#    exper_period[i] = exper_period[i] / (9553 * nu_period[i] + 3621 - 1971 * (nu_period[i] ** 2))
-
-
-# Подбор сетки частот
-def sliders_on_changed(val):
-    line.set_xdata(nu_adjust(nu_slider.val))
-    fig.canvas.draw_idle()
-
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-fig.subplots_adjust(bottom=0.15)
-nu_0 = 3562
-[line, approximation] = ax.plot(nu_adjust(nu_0), exper_period, nu_model, Trans, linewidth=2)
-nu_slider_ax = fig.add_axes([0.25, 0.05, 0.65, 0.03])
-nu_slider = Slider(nu_slider_ax, 'nu', nu_0 - 1, nu_0 + 1, valinit=nu_0)
-nu_slider.on_changed(sliders_on_changed)
-plt.show()
 print(nu_slider.val)
 nu = nu_adjust(nu_slider.val)
 nu_end = nu[len(nu) - 1]
-#exper_reversed = [exper_period[len(exper_period) - i - 1] for i in range(len(exper_period))]
+
+#for i in range(len(exper_period)):
+#    exper_period[i] = exper_period[i] / (9553 * nu_period[i] + 3621 - 1971 * (nu_period[i] ** 2))
 
 
 # Начало прямой задачи
@@ -171,7 +166,7 @@ for i in range(len(nuij)):
 
 x = [khapi[0, 0, :], khapi[0, 1, :], khapi[0, 2, :], khapi[0, 3, :], khapi[1, 0, :], khapi[1, 1, :], khapi[1, 2, :], khapi[1, 3, :]]
 exper_linear = - np.log(exper_period) / l
-los, cov = curve_fit(lin_comb, x, exper_linear, p0=1e13 * np.ones(8), bounds=[1e10, 1e22])
+los, cov = curve_fit(lin_comb, x, exper_linear, p0=1e13 * np.ones(8), bounds=[1e8, 1e22])
 print(los)
 
 for i in range(4):
