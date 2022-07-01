@@ -16,10 +16,6 @@ def lin_comb_iso1(x, y1, y2):
     return x[0] * y1 + x[1] * y2
 
 
-def exponential_comb_iso1(x, y1, y2):
-    return np.exp((- x[0] * y1 - x[1] * y2) * l)
-
-
 def baseline(a, b, c):
     return a * nu_period + b + c * (nu_period ** 2)
 
@@ -33,7 +29,7 @@ def nu_adjust(nu_0):
 
 
 nu_step = 0.048
-beginning = 40  # Номер первого пика
+beginning = 23  # Номер первого пика
 end = 960
 a = beginning
 pointmax = [beginning]
@@ -49,7 +45,6 @@ max_exp = max(exper)
 for i in range(len(fabri)):
     fabri[i] = max_fabri - fabri[i]
     exper[i] = max_exp - exper[i]
-
 
 plt.plot(np.arange(len(fabri)), fabri)
 plt.show()
@@ -94,15 +89,14 @@ fig = plt.figure()
 ax = fig.add_subplot(121)
 bx = fig.add_subplot(122)
 fig.subplots_adjust(bottom=0.25)
-a_0 = 5186.395
-b_0 = 1120.62
-c_0 = -1018.696
+a_0 = 5549.05
+b_0 = 602.55
+c_0 = -1086.27
 nu_0 = 3561.36
 [line, approximation] = ax.plot(nu_period, baseline(a_0, b_0, c_0), nu_period, exper_period, linewidth=2)
 [exp, model] = bx.plot(nu_adjust(nu_0), normalized(a_0, b_0, c_0), nu_model, Trans)
-bx.set_ylim(0, 1)
 a_slider_ax = fig.add_axes([0.25, 0.15, 0.65, 0.03])
-a_slider = Slider(a_slider_ax, 'a', 0, 10000, valinit=a_0)
+a_slider = Slider(a_slider_ax, 'a', 5000, 20000, valinit=a_0)
 b_slider_ax = fig.add_axes([0.25, 0.1, 0.65, 0.03])
 b_slider = Slider(b_slider_ax, 'b', 0, 10000, valinit=b_0)
 c_slider_ax = fig.add_axes([0.25, 0.05, 0.65, 0.03])
@@ -129,7 +123,7 @@ nu_end = nu[len(nu) - 1]
 #hapi.getHelp(hapi.ISO_ID)
 hapi.db_begin('Data')
 #hapi.fetch_by_ids('Mixture', [1, 2, 3, 4, 7, 8, 9, 10], nu_0 - 10, nu_end + 10)
-#hapi.fetch_by_ids('Mixture', [1, 7], nu_0 - 10, nu_end + 10)
+hapi.fetch_by_ids('Mixture', [1, 7], nu_0 - 10, nu_end + 10)
 #hapi.select('Mixture')
 
 molec, iso, nuij, Sref, E, Slf, Air, nair, Delta = hapi.getColumns('Mixture', ['molec_id',
@@ -181,18 +175,16 @@ x = [khapi[0, 0, :], khapi[0, 1, :], khapi[0, 2, :], khapi[0, 3, :], khapi[1, 0,
 exper_linear = - np.log(exper_period) / l
 los, cov = curve_fit(lin_comb_iso4, x, exper_linear, p0=1e13 * np.ones(8), bounds=[1e8, 1e22])
 """
-cut_len = int(len(nu) - 200)
-x = [khapi[0, 0, :cut_len], khapi[1, 0, :cut_len]]
-#exper_linear = - np.log(exper_period) / l
-#los, cov = curve_fit(lin_comb_iso1, x, exper_linear, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
-los, cov = curve_fit(exponential_comb_iso1, x, exper_period[:cut_len], p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
+x = [khapi[0, 0, :], khapi[1, 0, :]]
+exper_linear = - np.log(exper_period) / l
+los, cov = curve_fit(lin_comb_iso1, x, exper_linear, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
 print(los)
 
 for i in range(iso_num):
-    thapi[:cut_len] += los[i] * khapi[0, i, :cut_len] + los[i + iso_num] * khapi[1, i, :cut_len]
-thapi = np.exp(- l * thapi[:cut_len])
-plt.plot(nu[:cut_len], thapi[:cut_len], nu[:cut_len], exper_period[:cut_len])
+    thapi += los[i] * khapi[0, i, :] + los[i + iso_num] * khapi[1, i, :]
+thapi = np.exp(- l * thapi)
+plt.plot(nu, thapi, nu, exper_period)
 plt.show()
 
-plt.plot(nu[:cut_len], (thapi[:cut_len] - exper_period[:cut_len]) / exper_period[:cut_len])
+plt.plot(nu, (thapi - exper_period) / exper_period)
 plt.show()
