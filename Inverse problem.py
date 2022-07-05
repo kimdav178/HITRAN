@@ -32,14 +32,18 @@ def nu_adjust(nu_0):
     return np.arange(nu_0, nu_0 - 0.0005 + len(exper_period) * 0.001, 0.001)
 
 
+def search(x, a, b, c):
+    return a * x * x + b * x + c
+
+
 nu_step = 0.048
-beginning = 40  # Номер первого пика
+beginning = 66  # Номер первого пика
 end = 960
 a = beginning
 pointmax = [beginning]
 valuemax = [0]
 fabri = [float(i) for i in open("3562-3564/fp1").read().split()]
-exper = [float(i) for i in open("3562-3564/1").read().split()]
+exper = [float(i) for i in open("3562-3564/5").read().split()]
 hitran = pd.read_excel("3562-3564/3562.xlsx")
 Trans = np.array(hitran.Trans)
 nu_model = np.array(hitran.nu)
@@ -53,8 +57,8 @@ for i in range(len(fabri)):
 
 plt.plot(np.arange(len(fabri)), fabri)
 plt.show()
-plt.plot(np.arange(len(exper)), exper)
-plt.show()
+#plt.plot(np.arange(len(exper)), exper)
+#plt.show()
 
 for i in range(beginning, end):
     if ((fabri[i] >= max(fabri[i - 2], fabri[i - 1], fabri[i + 1], fabri[i + 2])) or
@@ -71,8 +75,8 @@ interp_grid = np.arange(beginning, pointmax[len(pointmax) - 1])
 interp_nu = interp1d(pointmax, valuemax, kind='quadratic')
 nu_interp = interp_nu(interp_grid)
 
-plt.plot(np.arange(len(nu_interp)), nu_interp)
-plt.show()
+#plt.plot(np.arange(len(nu_interp)), nu_interp)
+#plt.show()
 
 # Разворот и интерполяция спектра на периодическую сетку частот
 nu_reversed = [nu_interp[len(nu_interp) - i - 1] for i in range(len(nu_interp))]
@@ -180,11 +184,55 @@ for i in range(len(nuij)):
 x = [khapi[0, 0, :], khapi[0, 1, :], khapi[0, 2, :], khapi[0, 3, :], khapi[1, 0, :], khapi[1, 1, :], khapi[1, 2, :], khapi[1, 3, :]]
 exper_linear = - np.log(exper_period) / l
 los, cov = curve_fit(lin_comb_iso4, x, exper_linear, p0=1e13 * np.ones(8), bounds=[1e8, 1e22])
+
+x = [khapi[0, 0, :], khapi[1, 0, :]]
+#exper_linear = - np.log(exper_period) / l
+#los, cov = curve_fit(lin_comb_iso1, x, exper_linear, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
+los, cov = curve_fit(exponential_comb_iso1, x, exper_period, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
+print(los)
+
+#los[0] = 1.909e17
+#los[1] = 1.02e16
+for i in range(iso_num):
+    thapi += los[i] * khapi[0, i, :] + los[i + iso_num] * khapi[1, i, :]
+thapi = np.exp(- l * thapi)
+plt.plot(nu, thapi, nu_model, Trans)
+plt.show()
+
+plt.plot(nu, (thapi - exper_period) / exper_period)
+plt.show()
+
+
+plt.plot(np.arange(len(exper_period)), exper_period / thapi)
+plt.show()
+
+koefs, covar = curve_fit(search, np.arange(len(exper_period)), exper_period / thapi, p0=5000 * np.ones(3), bounds=[-1e4, 1e4])
+print(koefs)
+
+new_baseline = search(np.arange(len(exper_period)), koefs[0], koefs[1], koefs[2])
+plt.plot(np.arange(len(exper_period)), exper_period / thapi, np.arange(len(exper_period)), new_baseline)
+plt.show()
+
+for i in range(len(exper_period)):
+    exper_period[i] = exper_period[i] / (koefs[1] * nu_period[i] + koefs[2] + koefs[0] * (nu_period[i] ** 2))
+
+los, cov = curve_fit(exponential_comb_iso1, x, exper_period, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
+print(los)
+
+thapi = np.zeros(len(nu))
+for i in range(iso_num):
+    thapi += los[i] * khapi[0, i, :] + los[i + iso_num] * khapi[1, i, :]
+thapi = np.exp(- l * thapi)
+plt.plot(nu, thapi, nu, exper_period)
+plt.show()
+
+plt.plot(nu, (thapi - exper_period) / exper_period)
+plt.show()
+
+
 """
 cut_len = int(len(nu) - 200)
 x = [khapi[0, 0, :cut_len], khapi[1, 0, :cut_len]]
-#exper_linear = - np.log(exper_period) / l
-#los, cov = curve_fit(lin_comb_iso1, x, exper_linear, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
 los, cov = curve_fit(exponential_comb_iso1, x, exper_period[:cut_len], p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
 print(los)
 
