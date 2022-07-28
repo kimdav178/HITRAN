@@ -75,7 +75,7 @@ interp_grid = np.arange(beginning, pointmax[len(pointmax) - 1])
 interp_nu = interp1d(pointmax, valuemax, kind='quadratic')
 nu_interp = interp_nu(interp_grid)
 
-#plt.plot(np.arange(len(nu_interp)), nu_interp)
+#plt.plot(np.arange(len(nu_interp1)), nu_interp1)
 #plt.show()
 
 # Разворот и интерполяция спектра на периодическую сетку частот
@@ -98,9 +98,9 @@ fig = plt.figure()
 ax = fig.add_subplot(121)
 bx = fig.add_subplot(122)
 fig.subplots_adjust(bottom=0.25)
-a_0 = 5186.395
-b_0 = 1120.62
-c_0 = -1018.696
+a_0 = 5028.72
+b_0 = 1301.86
+c_0 = -984.24
 nu_0 = 3561.36
 [line, approximation] = ax.plot(nu_period, baseline(a_0, b_0, c_0), nu_period, exper_period, linewidth=2)
 [exp, model] = bx.plot(nu_adjust(nu_0), normalized(a_0, b_0, c_0), nu_model, Trans)
@@ -125,9 +125,6 @@ print(nu_slider.val)
 nu = nu_adjust(nu_slider.val)
 nu_end = nu[len(nu) - 1]
 
-#for i in range(len(exper_period)):
-#    exper_period[i] = exper_period[i] / (9553 * nu_period[i] + 3621 - 1971 * (nu_period[i] ** 2))
-
 
 # Начало прямой задачи
 #hapi.getHelp(hapi.ISO_ID)
@@ -150,7 +147,7 @@ kb = 1.380649e-16  # Постоянная Больцмана
 pref = 1  # Атмосферное давление
 ps = np.zeros((molec_num, iso_num))  # Парциальное давление метана
 p = 1  # Заданное давление
-l = 100
+l = 130
 Tr = 273
 concentration = [0.008, 0.00042]
 for j in range(iso_num):
@@ -182,58 +179,44 @@ for i in range(len(nuij)):
 
 """
 x = [khapi[0, 0, :], khapi[0, 1, :], khapi[0, 2, :], khapi[0, 3, :], khapi[1, 0, :], khapi[1, 1, :], khapi[1, 2, :], khapi[1, 3, :]]
-exper_linear = - np.log(exper_period) / l
+exper_linear = - np.log(exper_period1) / l
 los, cov = curve_fit(lin_comb_iso4, x, exper_linear, p0=1e13 * np.ones(8), bounds=[1e8, 1e22])
 
 x = [khapi[0, 0, :], khapi[1, 0, :]]
-#exper_linear = - np.log(exper_period) / l
+#exper_linear = - np.log(exper_period1) / l
 #los, cov = curve_fit(lin_comb_iso1, x, exper_linear, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
-los, cov = curve_fit(exponential_comb_iso1, x, exper_period, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
+los, cov = curve_fit(exponential_comb_iso1, x, exper_period1, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
 print(los)
 
-#los[0] = 1.909e17
-#los[1] = 1.02e16
+los[0] = 1.909e17
+los[1] = 1.02e16
 for i in range(iso_num):
     thapi += los[i] * khapi[0, i, :] + los[i + iso_num] * khapi[1, i, :]
 thapi = np.exp(- l * thapi)
 plt.plot(nu, thapi, nu_model, Trans)
 plt.show()
 
-plt.plot(nu, (thapi - exper_period) / exper_period)
+plt.plot(nu, (thapi - exper_period1) / exper_period1)
 plt.show()
 
-
-plt.plot(np.arange(len(exper_period)), exper_period / thapi)
+plt.plot(np.arange(len(exper_period1)), exper_period1 / thapi)
 plt.show()
 
-koefs, covar = curve_fit(search, np.arange(len(exper_period)), exper_period / thapi, p0=5000 * np.ones(3), bounds=[-1e4, 1e4])
+koefs, covar = curve_fit(search, nu_period1, exper_period1 / thapi, p0=5000 * np.ones(3), bounds=[-1e4, 1e4])
 print(koefs)
 
-new_baseline = search(np.arange(len(exper_period)), koefs[0], koefs[1], koefs[2])
-plt.plot(np.arange(len(exper_period)), exper_period / thapi, np.arange(len(exper_period)), new_baseline)
+new_baseline = search(nu_period1, koefs[0], koefs[1], koefs[2])
+plt.plot(np.arange(len(exper_period1)), exper_period1 / thapi, np.arange(len(exper_period1)), new_baseline)
 plt.show()
 
-for i in range(len(exper_period)):
-    exper_period[i] = exper_period[i] / (koefs[1] * nu_period[i] + koefs[2] + koefs[0] * (nu_period[i] ** 2))
-
-los, cov = curve_fit(exponential_comb_iso1, x, exper_period, p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
-print(los)
+for i in range(len(exper_period1)):
+    exper_period1[i] = exper_period1[i] / (koefs[1] * nu_period1[i] + koefs[2] + koefs[0] * (nu_period1[i] ** 2))
+"""
 
 thapi = np.zeros(len(nu))
-for i in range(iso_num):
-    thapi += los[i] * khapi[0, i, :] + los[i + iso_num] * khapi[1, i, :]
-thapi = np.exp(- l * thapi)
-plt.plot(nu, thapi, nu, exper_period)
-plt.show()
-
-plt.plot(nu, (thapi - exper_period) / exper_period)
-plt.show()
-
-
-"""
-cut_len = int(len(nu) - 200)
+cut_len = int(len(nu) - 180)
 x = [khapi[0, 0, :cut_len], khapi[1, 0, :cut_len]]
-los, cov = curve_fit(exponential_comb_iso1, x, exper_period[:cut_len], p0=1e13 * np.ones(2), bounds=[1e8, 1e22])
+los, cov = curve_fit(exponential_comb_iso1, x, exper_period[:cut_len], p0=[2e17, 1e16], bounds=[1e15, 1e18])
 print(los)
 
 for i in range(iso_num):
