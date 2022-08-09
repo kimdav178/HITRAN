@@ -6,6 +6,7 @@ from matplotlib.widgets import Slider
 import hapi
 from scipy.optimize import curve_fit
 import math
+import findiff
 
 
 def lin_comb_iso1(x, y1, y2):
@@ -32,10 +33,13 @@ pointmax = [beginning1]
 valuemax = [0]
 fabri = [float(i) for i in open("Modulation/fpmod").read().split()]
 exper = [float(i) for i in open("Modulation/1mod").read().split()]
-hitran = pd.read_excel("3562-3564/3562.xlsx")
-Trans = np.array(hitran.Trans)
-Trans = np.gradient(np.gradient(Trans, 0.01), 0.01)
+hitran = pd.read_excel("3562-3564/Smooth.xlsx")
+Trans2 = np.array(hitran.Trans)
+Trans = np.gradient(np.gradient(Trans2, 0.01), 0.01)
 nu_model = np.array(hitran.nu)
+#print(findiff.coefficients(deriv=2, offsets=(-2, -1, 0, 1, 2))['coefficients'])
+plt.plot(nu_model, Trans)
+plt.show()
 
 max_fabri = max(fabri)
 max_exp = max(exper)
@@ -45,8 +49,8 @@ for i in range(len(fabri)):
 
 #plt.plot(np.arange(len(fabri)), fabri)
 #plt.show()
-#plt.plot(np.arange(len(exper)), exper)
-#plt.show()
+plt.plot(np.arange(len(exper)), exper)
+plt.show()
 
 exper_cut1 = exper[beginning:end]
 fabri_cut = fabri[beginning:end]
@@ -63,8 +67,8 @@ fabri2 = []
 fabri3 = []
 fabri4 = []
 deriv = []
-i = 0
-while i < len(exper_cut1) - 3:
+i = 1
+while i < end - 111:
     exper1.append(exper_cut1[i])
     fabri1.append(fabri_cut[i])
     points1.append(i)
@@ -77,17 +81,20 @@ while i < len(exper_cut1) - 3:
     exper4.append(exper_cut1[i + 3])
     fabri4.append(fabri_cut[i + 3])
     points4.append(i + 3)
-    deriv.append(2 * (exper_cut1[i + 3] + exper_cut1[i + 1] - 2 * exper_cut1[i]) / (exper_cut1[i] + exper_cut1[i + 2]))
+    #deriv.append(2 * (exper_cut1[i] + exper_cut1[i + 2] - 2 * exper_cut1[i + 1]) / (exper_cut1[i + 1] + exper_cut1[i + 3]))
+    deriv.append(
+        2 * (exper_cut1[i] + exper_cut1[i + 110] - 2 * exper_cut1[i + 63]) / (exper_cut1[i + 63] + exper_cut1[i + 49]))
     i += 4
 
 
-interp_grid1 = np.arange(0, end - 4)
-interp_signal1 = interp1d(points1, exper1, kind='quadratic')
-signal_interp1 = interp_signal1(interp_grid1)
+interp_grid1 = np.arange(1, end - 114)
+#interp_signal1 = interp1d(points1, exper1, kind='quadratic')
+#signal_interp1 = interp_signal1(interp_grid1)
 interp_fabri1 = interp1d(points1, fabri1, kind='quadratic')
 fabri_interp1 = interp_fabri1(interp_grid1)
 interp_deriv = interp1d(points1, deriv, kind='quadratic')
 deriv_interp = interp_deriv(interp_grid1)
+"""
 interp_grid2 = np.arange(1, end - 3)
 interp_signal2 = interp1d(points2, exper2, kind='quadratic')
 signal_interp2 = interp_signal2(interp_grid2)
@@ -103,9 +110,9 @@ interp_signal4 = interp1d(points4, exper4, kind='quadratic')
 signal_interp4 = interp_signal4(interp_grid4)
 interp_fabri4 = interp1d(points4, fabri4, kind='quadratic')
 fabri_interp4 = interp_fabri4(interp_grid4)
-
-plt.plot(interp_grid1, deriv_interp)
-plt.show()
+"""
+#plt.plot(interp_grid1, fabri_interp1)
+#plt.show()
 #plt.plot(interp_grid2, fabri_interp2)
 #plt.show()
 #plt.plot(interp_grid3, fabri_interp3)
@@ -113,7 +120,7 @@ plt.show()
 #plt.plot(interp_grid4, fabri_interp4)
 #plt.show()
 
-for i in range(beginning1, end - 6):
+for i in range(beginning1, end - 117):
     if ((fabri_interp1[i] >= max(fabri_interp1[i - 2], fabri_interp1[i - 1], fabri_interp1[i + 1], fabri_interp1[i + 2])) or
         (fabri_interp1[i] <= min(fabri_interp1[i - 3], fabri_interp1[i - 2], fabri_interp1[i - 1], fabri_interp1[i + 1], fabri_interp1[i + 2]))) and i > a + 2:
         l = i - a
@@ -121,21 +128,27 @@ for i in range(beginning1, end - 6):
         valuemax.append(valuemax[len(valuemax) - 1] + nu_step / 2)
         a = i
 
-exper_cut1 = signal_interp1[beginning1:a]
+#exper_cut1 = signal_interp1[beginning1:a]
 interp_grid_nu1 = np.arange(beginning1, pointmax[len(pointmax) - 1])
 interp_nu1 = interp1d(pointmax, valuemax, kind='quadratic')
 nu_interp1 = interp_nu1(interp_grid_nu1)
 deriv_cut = deriv_interp[beginning1:a]
 
-plt.plot(np.arange(len(nu_interp1)), nu_interp1)
-plt.show()
+"""
+for i in range(len(deriv_cut) - 1):
+    if i < len(deriv_cut):
+        deriv_cut[i] = deriv_cut[i] / ((nu_interp1[i + 1] - nu_interp1[i]) ** 2)
+deriv_cut[len(deriv_cut) - 1] = deriv_cut[len(deriv_cut) - 1] / ((nu_interp1[len(deriv_cut) - 1] - nu_interp1[len(deriv_cut) - 2]) ** 2)
+"""
+#plt.plot(np.arange(len(nu_interp1)), nu_interp1)
+#plt.show()
 
 # Разворот и интерполяция спектра на периодическую сетку частот
 nu_reversed1 = [nu_interp1[len(nu_interp1) - i - 1] for i in range(len(nu_interp1))]
-exper_reversed1 = [exper_cut1[len(exper_cut1) - i - 1] for i in range(len(exper_cut1))]
+#exper_reversed1 = [exper_cut1[len(exper_cut1) - i - 1] for i in range(len(exper_cut1))]
 nu_period1 = np.arange(nu_reversed1[0], 0, -0.001)
-interp_exper1 = interp1d(nu_reversed1, exper_reversed1, kind='quadratic')
-exper_period1 = interp_exper1(nu_period1)
+#interp_exper1 = interp1d(nu_reversed1, exper_reversed1, kind='quadratic')
+#exper_period1 = interp_exper1(nu_period1)
 deriv_reversed = [deriv_cut[len(deriv_cut) - i - 1] for i in range(len(deriv_cut))]
 interp_deriv = interp1d(nu_reversed1, deriv_reversed, kind='quadratic')
 deriv_period = interp_deriv(nu_period1)
